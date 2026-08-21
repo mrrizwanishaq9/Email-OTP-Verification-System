@@ -1,0 +1,177 @@
+import secrets
+import ipywidgets as widgets
+from IPython.display import display, HTML
+
+# ==============================
+# OTP SETTINGS
+# ==============================
+
+OTP_TIME = 60
+current_otp = ""
+
+# ==============================
+# TITLE
+# ==============================
+
+display(HTML("""
+<h2>🔐 Email OTP Verification</h2>
+<p>Enter your email to generate OTP</p>
+"""))
+
+# ==============================
+# EMAIL INPUT
+# ==============================
+
+email_input = widgets.Text(
+    placeholder="Enter Email...",
+    description="📧 Email:",
+    layout=widgets.Layout(width="400px")
+)
+
+send_button = widgets.Button(
+    description="📧 Send OTP",
+    button_style="success"
+)
+
+main_box = widgets.VBox([
+    email_input,
+    send_button
+])
+
+display(main_box)
+
+
+# ==============================
+# SEND OTP
+# ==============================
+
+def send_otp(b):
+
+    global current_otp
+
+    email = email_input.value.strip()
+
+    if not email or "@" not in email:
+        display(HTML("<h3>❌ Please enter a valid email!</h3>"))
+        return
+
+    # Generate OTP
+    current_otp = str(secrets.randbelow(900000) + 100000)
+
+    # Hide email section
+    email_input.disabled = True
+    send_button.disabled = True
+
+    # Show OTP in Colab
+    display(HTML(f"""
+    <hr>
+    <h3>📧 OTP Generated</h3>
+    <h2>🔢 OTP: {current_otp}</h2>
+    <p>⏱️ OTP expires in 60 seconds</p>
+    """))
+
+    # ==============================
+    # OTP INPUT
+    # ==============================
+
+    otp_input = widgets.Text(
+        placeholder="Enter 6 Digit OTP...",
+        description="🔢 OTP:",
+        layout=widgets.Layout(width="400px")
+    )
+
+    verify_button = widgets.Button(
+        description="🔓 Verify OTP",
+        button_style="success"
+    )
+
+    display(otp_input)
+    display(verify_button)
+
+    # ==============================
+    # TIMER
+    # ==============================
+
+    display(HTML("""
+    <div id="otp_timer"
+         style="font-size:22px;font-weight:bold;margin-top:15px;">
+        ⏱️ Time Remaining: 60 seconds
+    </div>
+
+    <script>
+    let timeLeft = 60;
+
+    const timer = setInterval(function() {
+
+        timeLeft--;
+
+        let element = document.getElementById("otp_timer");
+
+        if (element) {
+            element.innerHTML =
+            "⏱️ Time Remaining: " + timeLeft + " seconds";
+        }
+
+        if (timeLeft <= 0) {
+
+            clearInterval(timer);
+
+            if (element) {
+                element.innerHTML =
+                "⏰ OTP EXPIRED";
+            }
+        }
+
+    }, 1000);
+    </script>
+    """))
+
+    # ==============================
+    # VERIFY OTP
+    # ==============================
+
+    def verify(b):
+
+        entered = otp_input.value.strip()
+
+        if entered == current_otp:
+
+            display(HTML("""
+            <div style="
+                margin-top:20px;
+                padding:20px;
+                border-radius:10px;
+                font-size:20px;
+                background:#d4edda;
+                color:#155724;
+            ">
+                🎉 SUCCESSFULLY VERIFIED!<br><br>
+                ✅ OTP is Correct
+            </div>
+            """))
+
+            verify_button.disabled = True
+            otp_input.disabled = True
+
+        else:
+
+            display(HTML("""
+            <div style="
+                margin-top:20px;
+                padding:20px;
+                border-radius:10px;
+                font-size:20px;
+                background:#f8d7da;
+                color:#721c24;
+            ">
+                ❌ Wrong OTP!<br><br>
+                🔄 Please Try Again
+            </div>
+            """))
+
+            otp_input.value = ""
+
+    verify_button.on_click(verify)
+
+
+send_button.on_click(send_otp)
